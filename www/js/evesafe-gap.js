@@ -24,6 +24,7 @@ var prev_event = false;
 var watchID = null;
 var acclr_new = new Object();
 var acclr_prev = new Object();
+var acclr_output;
 var def_acc_x;
 var def_acc_y;
 var def_acc_z;
@@ -46,6 +47,9 @@ function app_initialize(app_input) {
             case 'getAcceleration':
                 startWatch();
                 break;
+			case 'writeLog':
+				writeLog(acclr_output);
+				break;
         }
     }
 }
@@ -126,16 +130,25 @@ function startWatch() {
     // onSuccess: Get a snapshot of the current acceleration
     function onAcclrSuccess(acceleration) {
         console.log('flow - am inside onAcclrSuccess');
-        if (acclr_prev['x'] != acclr_new['x']) {
-         acclr_new['x']=acceleration.x;
+        acclr_new['x']=acceleration.x;
         acclr_new['y']=acceleration.y;
         acclr_new['z']=acceleration.z;  
+
+        if (acclr_prev['x'] != acclr_new['x']) {
+		//Raise an ALram!!!!!!!
         //assigning to prev object   
         acclr_prev = jQuery.extend(true, {}, acclr_new);
+		console.log('User is NOT stable X: ' + acclr_new['x'] + ' Y: ' + acclr_new['y'] + ' Z: ' + acclr_new['z']);
+		acclr_output = 'User is NOT stable X: ' + acclr_new['x'] + ' Y: ' + acclr_new['y'] + ' Z: ' + acclr_new['z'];
+		app_initialize('writeLog');
         }
         else {
+		//Raise No Alarm !!
         $('.accelerometer').find('h2').append('User is stable');
-        console.log('User is stable');
+        console.log('User is stable X: ' + acclr_new['x'] + ' Y: ' + acclr_new['y'] + ' Z: ' + acclr_new['z']);
+		acclr_output = 'User is stable X: ' + acclr_new['x'] + ' Y: ' + acclr_new['y'] + ' Z: ' + acclr_new['z'];
+		app_initialize('writeLog');
+
         //var element = document.getElementById('accelerometer');
         /*        console.log('X '+acceleration.x);
                 $('.accelerometer').find('h3').append(acceleration.y);
@@ -150,7 +163,29 @@ function startWatch() {
         alert('onError!');
     }
 
+function writeLog(output)
+{
+// Cordova is ready
+    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
 
+    function gotFS(fileSystem) {
+        fileSystem.root.getFile("evesafe.log", {create: true, exclusive: false}, gotFileEntry, fail);
+    }
+
+    function gotFileEntry(fileEntry) {
+        fileEntry.createWriter(gotFileWriter, fail);
+    }
+
+    function gotFileWriter(writer) {
+		writer.seek(writer.length-1);
+        writer.write(output + "\n\n");
+    }
+
+    function fail(error) {
+        console.log(error.code);
+    }
+
+}
 
 $(document).ready(function() {
                   //hiding all div tags
@@ -170,6 +205,19 @@ $(document).ready(function() {
                                              $('.accelerometer').show();      
                                              
                                              });
-                  
+// global eventlistner
+document.addEventListener("deviceready", onDeviceReady, false);
+function onDeviceReady() {
+		document.addEventListener("backbutton", function(e){
+       
+        if (confirm("Are you sure you want to logout?")) {
+            /* Here is where my AJAX code for logging off goes */
+			e.preventDefault();
+			stopWatch();
+			navigator.app.exitApp();
+        }
+		}, false);
+}
+             	     
                   
                   });//closing document ready
