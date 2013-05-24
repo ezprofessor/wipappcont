@@ -187,6 +187,33 @@ function writeLog(output)
 
 }
 
+// Handle the onDevice ready event
+function onDeviceReady() {
+		document.addEventListener("backbutton", function(e){
+       
+        if (confirm("Are you sure you want to logout?")) {
+            /* Here is where my AJAX code for logging off goes */
+			e.preventDefault();
+			stopWatch();
+			navigator.app.exitApp();
+        }
+		}, false);
+		
+		//Call Install Ice here
+}
+
+// Handle the pause event
+    //
+    function onPause(e) {
+    	e.preventDefault();
+    	console.log('iflow inside onPause, its overridden');
+    }
+
+// Handle the online event
+    //
+    function onOnline() {
+    }
+
 $(document).ready(function() {
                   //hiding all div tags
                   $('.geoLocation,.accelerometer').hide();
@@ -206,18 +233,11 @@ $(document).ready(function() {
                                              
                                              });
 // global eventlistner
-document.addEventListener("deviceready", onDeviceReady, false);
-function onDeviceReady() {
-		document.addEventListener("backbutton", function(e){
-       
-        if (confirm("Are you sure you want to logout?")) {
-            /* Here is where my AJAX code for logging off goes */
-			e.preventDefault();
-			stopWatch();
-			navigator.app.exitApp();
-        }
-		}, false);
-}
+document.addEventListener("deviceready", onDeviceReady, false); // event for backbutton and installIce
+document.addEventListener("online", onOnline, false); // when the app is connected to the internet
+document.addEventListener("pause", onPause, false); // when the app goes backend
+
+
              	     
                   
                   });//closing document ready
